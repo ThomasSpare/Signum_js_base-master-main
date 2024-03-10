@@ -1,4 +1,5 @@
 import "@fontsource/bruno-ace-sc";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import {
   SafeAreaView,
@@ -14,6 +15,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { analyzeAudio, scale, sample } from "react-native-audio-analyzer";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import { useFonts } from "expo-font";
+
+import colors from "../config/colors";
 
 function WelcomeScreen(props) {
   const [fontsLoaded] = useFonts({
@@ -80,6 +83,25 @@ function WelcomeScreen(props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <MaterialCommunityIcons
+        style={styles.icons}
+        name="instagram"
+        size={24}
+        color="white"
+      />
+      <MaterialCommunityIcons
+        style={styles.icons}
+        name="web"
+        size={24}
+        color="white"
+      />
+      <MaterialCommunityIcons
+        style={styles.icons}
+        name="view-gallery-outline"
+        size={24}
+        color="white"
+      />
+
       <Animated.View
         style={[
           {
@@ -94,13 +116,19 @@ function WelcomeScreen(props) {
         />
       </Animated.View>
       <View style={styles.buttons}>
-        <Button color="blue" title="Book a session" />
-        <br />
-        <Button color="darkblue" title="Get notified on special deals" />
-        <br />
-        <Button color="blue" title="Contact us" />
-        <br />
-        <Button color="darkblue" title="About us" />
+        <Button
+          style={styles.singleBtn}
+          color="#000e8f"
+          title="Book a session"
+        />
+        <Button
+          style={styles.singleBtn}
+          color="#2425ff"
+          title="Get notified on special deals"
+        />
+        <Button style={styles.singleBtn} color="#000e8f" title="Contact us" />
+
+        <Button style={styles.singleBtn} color="#2425ff" title="About us" />
       </View>
       <StatusBar style="auto" />
       <br />
@@ -134,7 +162,7 @@ function WelcomeScreen(props) {
 const styles = StyleSheet.create({
   container: {
     backgroundImage: "url('../app/assets/deepspace.jpg')",
-    borderColor: "darkblue",
+    borderColor: colors.secondary,
     borderRadius: 5,
     borderWidth: 5,
     flex: 1,
@@ -146,10 +174,26 @@ const styles = StyleSheet.create({
   fadingContainer: {
     flex: 1,
     padding: 20,
-    backgroundColor: "darkblue",
-    top: 0,
+    backgroundColor: colors.secondary,
+    bottom: 70,
     width: 400,
     height: 500,
+  },
+  icons: {
+    display: "grid",
+    justifyContent: "top",
+    position: "relative",
+    left: 170,
+    bottom: 50,
+    margin: 10,
+  },
+  Image: {
+    flex: 1,
+    marginBottom: 300,
+    width: 200,
+    height: 200,
+    top: 10,
+    resizeMode: "contain",
   },
   news: {
     flexWrap: "wrap",
@@ -157,14 +201,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 20,
     fontFamily: "Bruno Ace SC",
-  },
-  Image: {
-    flex: 1,
-    marginBottom: 300,
-    width: 200,
-    height: 200,
-    top: 20,
-    resizeMode: "contain",
   },
   row: {
     flexDirection: "row",
@@ -176,38 +212,43 @@ const styles = StyleSheet.create({
   },
   item: {
     width: 3,
-    backgroundColor: "blue",
+    backgroundColor: colors.primary,
     marginHorizontal: 2,
   },
   buttons: {
+    display: "grid",
     top: 400,
     flexDirection: "column",
     position: "absolute",
-    shadowColor: "black",
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 5,
   },
   loginButton: {
-    top: 850,
+    top: 720,
     color: "white",
     width: "100%",
     height: 50,
     textAlign: "center",
     justifyContent: "center",
     position: "absolute",
-    backgroundColor: "blue",
+    backgroundColor: colors.primary,
   },
   registerButton: {
-    top: 900,
+    top: 770,
     color: "black",
     width: "100%",
     height: 50,
     textAlign: "center",
     justifyContent: "center",
     position: "absolute",
-    backgroundColor: "lightblue",
+    backgroundColor: colors.extra,
+  },
+  singleBtn: {
+    display: "grid",
+    position: "relative",
+    shadowColor: "black",
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 5,
   },
   text: {
     left: 50,
