@@ -1,27 +1,53 @@
-import "@fontsource/bruno-ace-sc";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { StatusBar } from "expo-status-bar";
+import React, { useRef, useEffect, useState } from "react";
 import {
   SafeAreaView,
   Image,
   Animated,
   Button,
-  Alert,
   Text,
   StyleSheet,
   View,
+  TouchableOpacity,
 } from "react-native";
-import React, { useRef, useState, useEffect } from "react";
-import { analyzeAudio, scale, sample } from "react-native-audio-analyzer";
-import ReactNativeBlobUtil from "react-native-blob-util";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
-
+import { Audio } from "expo-av";
+import { Svg, Path } from "react-native-svg";
 import colors from "../config/colors";
 
-function WelcomeScreen(props) {
+import track1 from "../assets/sounds/Burdens.wav";
+import track2 from "../assets/sounds/AfterGlow.wav";
+import track3 from "../assets/sounds/Big John - Truthful Reggea Man.mp3";
+import track4 from "../assets/sounds/Big John.mp3";
+import track5 from "../assets/sounds/BURDENS II.wav";
+import track6 from "../assets/sounds/Electronic Mix.mp3";
+import track7 from "../assets/sounds/John Vianney - A Cry of a Father.mp3";
+import track8 from "../assets/sounds/juli-24 -- 4.mp3";
+import track9 from "../assets/sounds/Låt-1-2.mp3";
+import track10 from "../assets/sounds/Rap Mix.mp3";
+
+const tracks = [
+  { name: "Burdens", file: track1 },
+  { name: "AfterGlow", file: track2 },
+  { name: "Big John - Truthful Reggea Man", file: track3 },
+  { name: "Big John", file: track4 },
+  { name: "AfroBeat", file: track5 },
+  { name: "Electronic Mix", file: track6 },
+  { name: "Electronic Mix II", file: track7 },
+  { name: "Electronic Mix 2", file: track8 },
+  { name: "Electronic Mix 3", file: track9 },
+  { name: "Rap Mix", file: track10 },
+];
+
+function WelcomeScreen({ navigation }) {
   const [fontsLoaded] = useFonts({
     "Bruno Ace SC": require("../assets/fonts/BrunoAceSC-Regular.ttf"),
   });
+  const [sound, setSound] = useState();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [spectrumData, setSpectrumData] = useState(new Array(64).fill(0));
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const fadeIn = () => {
@@ -34,13 +60,73 @@ function WelcomeScreen(props) {
 
   useEffect(() => {
     fadeIn();
-  }, []);
+    return sound ? () => sound.unloadAsync() : undefined;
+  }, [sound]);
+
+  const playSound = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+      tracks[currentTrackIndex].file
+    );
+    setSound(sound);
+    await sound.playAsync();
+    console.log("Audio started playing"); // Confirm audio starts playing
+    setIsPlaying(true);
+
+    sound.setOnPlaybackStatusUpdate(async (status) => {
+      console.log("Playback status update:", status); // Log playback status update
+      // Wait for 1 second before processing waveform data
+      setTimeout(() => {
+        if (status && status.waveform && Array.isArray(status.waveform)) {
+          let { waveform } = status;
+          let spectrum = [];
+          for (let i = 0; i < waveform.length; i += 2) {
+            spectrum.push(waveform[i] + waveform[i + 1]);
+          }
+          setSpectrumData(spectrum);
+          console.log("Current spectrumData:", spectrum); // Log the current spectrumData
+        } else {
+          console.log("Waveform data is not available or empty");
+        }
+      }, 1000); // Delay in milliseconds
+    });
+  };
+
+  const pathData = spectrumData
+    .map((peak, index) => {
+      // Calculate the x and y coordinates for each point
+      const x = index * 4; // Adjust spacing as needed
+      const y = 200 - peak; // Adjust scaling as needed
+      return `L${x},${y}`;
+    })
+    .join("");
+
+  const pauseSound = async () => {
+    if (sound) {
+      await sound.pauseAsync();
+      setIsPlaying(false);
+    }
+  };
+
+  const forwardSound = async () => {
+    let nextTrackIndex = (currentTrackIndex + 1) % tracks.length;
+    setCurrentTrackIndex(nextTrackIndex);
+    if (isPlaying) {
+      await sound.stopAsync();
+      playSound();
+    }
+  };
+
+  const backwardSound = async () => {
+    let prevTrackIndex =
+      (currentTrackIndex - 1 + tracks.length) % tracks.length;
+    setCurrentTrackIndex(prevTrackIndex);
+    if (isPlaying) {
+      await sound.stopAsync();
+      playSound();
+    }
+  };
 
   const MyAppText = ({ children }) => {
-    const [fontsLoaded] = useFonts({
-      "Bruno Ace SC": require("../assets/fonts/BrunoAceSC-Regular.ttf"),
-    });
-
     if (!fontsLoaded) {
       return null; // or any loading indicator
     }
@@ -61,9 +147,9 @@ function WelcomeScreen(props) {
   };
 
   const MyAppHeaderText = ({ children }) => {
-    const [fontsLoaded] = useFonts({
-      "Bruno Ace SC": require("../assets/fonts/BrunoAceSC-Regular.ttf"),
-    });
+    if (!fontsLoaded) {
+      return null; // or any loading indicator
+    }
     return (
       <Text
         style={{
@@ -120,41 +206,74 @@ function WelcomeScreen(props) {
           style={styles.singleBtn}
           color="#000e8f"
           title="Book a session"
+          onPress={() => navigation.navigate("Book")}
         />
         <Button
           style={styles.singleBtn}
           color="#2425ff"
-          title="Get notified on special deals"
+          title="Upload your music"
+          onPress={() => navigation.navigate("Upload")}
         />
         <Button style={styles.singleBtn} color="#000e8f" title="Contact us" />
-
-        <Button style={styles.singleBtn} color="#2425ff" title="About us" />
+        <Button
+          style={styles.singleBtn}
+          color="#2425ff"
+          title="About us"
+          onPress={() => navigation.navigate("About")}
+        />
       </View>
       <StatusBar style="auto" />
       <br />
-      <View>
-        <Animated.View
-          style={[
-            styles.fadingContainer,
-            {
-              // Bind opacity to animated value
-              opacity: fadeAnim,
-            },
-          ]}
-        >
-          <Text style={styles.news}>Special deal on 1-track production</Text>
-        </Animated.View>
+      <View style={styles.container}>
+        {/* Other components */}
+        <View style={styles.waveformContainer}>
+          <Svg height="200" width="400">
+            <Path
+              d={`M0,200 ${pathData}`}
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+            />
+          </Svg>
+        </View>
       </View>
       <Text style={styles.text}>
         <MyAppHeaderText>DAMREC PRODUCTIONS</MyAppHeaderText>
         <br />
         <MyAppText>
-          Welcome to our app. Here you can book your studio sessions and get
-          notified about special deals and more.
+          Welcome to our app. Here you can book your studio sessions, upload the
+          music you've worked on and hear some great music from us.
         </MyAppText>
       </Text>
-      <View style={styles.loginButton}>Login</View>
-      <View style={styles.registerButton}>Register</View>
+      <View style={styles.audioPlayer}>
+        <Text style={styles.trackName}>{tracks[currentTrackIndex].name}</Text>
+        <View style={styles.audioControls}>
+          <TouchableOpacity onPress={backwardSound}>
+            <MaterialCommunityIcons name="rewind" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={isPlaying ? pauseSound : playSound}>
+            <MaterialCommunityIcons
+              name={isPlaying ? "pause" : "play"}
+              size={24}
+              color="white"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={forwardSound}>
+            <MaterialCommunityIcons
+              name="fast-forward"
+              size={24}
+              color="white"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => sound.setIsMutedAsync(true)}>
+            <MaterialCommunityIcons
+              name="volume-mute"
+              size={24}
+              color="white"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -257,6 +376,44 @@ const styles = StyleSheet.create({
     textAlign: "center",
     top: 50,
     fontFamily: "Bruno Ace SC",
+  },
+  authContainer: {
+    top: 600,
+    width: "80%",
+    alignItems: "center",
+  },
+  audioPlayer: {
+    position: "absolute",
+    bottom: 50,
+    alignItems: "center",
+  },
+  trackName: {
+    color: "white",
+    fontSize: 16,
+    fontFamily: "Bruno Ace SC",
+    marginBottom: 10,
+  },
+  waveformContainer: {
+    marginTop: 20,
+    alignSelf: "center",
+  },
+  audioControls: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: 200,
+    zindex: 999,
+  },
+  spectrumWrapper: {
+    position: "absolute",
+    bottom: 100,
+    left: 0,
+    zIndex: 999,
+    borderWidth: 1, // Add border for debugging
+    borderColor: "blue", // Add border color for debugging
+  },
+  spectrum: {
+    borderWidth: 1, // Add border for debugging
+    borderColor: "red", // Add border color for debugging
   },
 });
 
